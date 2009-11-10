@@ -35,6 +35,8 @@
 ;;
 ;; Below are complete command list:
 ;;
+;;  `eval-sexp-fu-flash-mode'
+;;    If this mode is on, various `eval-last-sexp'-ish commands will highlight the sexps during evaluation.
 ;;  `eval-sexp-fu-eval-sexp-inner-list'
 ;;    Evaluate the list _currently_ pointed at as sexp; print value in minibuffer.
 ;;  `eval-sexp-fu-eval-sexp-inner-sexp'
@@ -134,10 +136,15 @@ FORM is expected to return 3 values;
 See also `eval-sexp-fu-flash'."
   (declare (indent 1))
   `(defadvice ,command (around eval-sexp-fu-flash-region activate)
-     (multiple-value-bind (bounds hi unhi) ,form
-       (if bounds
-           (eval-sexp-fu-flash-doit (esf-konstantly ad-do-it) hi unhi)
-         ad-do-it))))
+     (if eval-sexp-fu-flash-mode
+         (multiple-value-bind (bounds hi unhi) ,form
+           (if bounds
+               (eval-sexp-fu-flash-doit (esf-konstantly ad-do-it) hi unhi)
+             ad-do-it))
+       ad-do-it)))
+(define-minor-mode eval-sexp-fu-flash-mode
+    "If this mode is on, various `eval-last-sexp'-ish commands will highlight the sexps during evaluation."
+  :init-value t :global t)
 
 ;;; eval-inner- stuff.
 (defun esf-funcall-and-eval-last-sexp (before eval-last-sexp)
