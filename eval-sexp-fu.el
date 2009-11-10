@@ -212,7 +212,32 @@ such that ignores any prefix arguments."
     (define-eval-sexp-fu-flash-command eek-eval-last-sexp
       (eval-sexp-fu-flash (cons (save-excursion (eek-backward-sexp)) (point))))
     )
-  )
+  ;; Batch install the eval-sexp-fu-eval-sexp-inner-{sexp,list}.
+  '(define-eval-sexp-fu-eval-sexp eval-sexp-fu-eval-sexp eval-last-sexp)
+  ;; For SLIME.
+  (eval-after-load 'slime
+    '(progn
+      (define-eval-sexp-fu-flash-command slime-eval-last-expression
+        (eval-sexp-fu-flash (save-excursion
+                              (backward-char)
+                              (bounds-of-thing-at-point 'sexp))))
+      (define-eval-sexp-fu-flash-command slime-pprint-eval-last-expression
+        (eval-sexp-fu-flash (save-excursion
+                              (backward-char)
+                              (bounds-of-thing-at-point 'sexp))))
+      (define-eval-sexp-fu-flash-command slime-eval-defun
+        (eval-sexp-fu-flash (save-excursion
+                              (slime-beginning-of-defun)
+                              (bounds-of-thing-at-point 'sexp))))
+      (define-eval-sexp-fu-eval-sexp eval-sexp-fu-slime-eval-expression
+          slime-eval-last-expression)
+      (define-eval-sexp-fu-eval-sexp eval-sexp-fu-slime-pprint-eval-expression
+          slime-pprint-eval-last-expression)
+      ;;=> Defines:
+      ;; `eval-sexp-fu-slime-eval-expression-inner-list',
+      ;; `eval-sexp-fu-slime-eval-expression-inner-sexp'
+      ;; and the pprint variants respectively.
+      )))
 
 (provide 'eval-sexp-fu)
 ;;; eval-sexp-fu.el ends here
