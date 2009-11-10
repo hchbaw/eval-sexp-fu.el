@@ -173,6 +173,9 @@ Interactivelly with numeric prefix argument, call to `backward-up-list' happens 
   (esf-funcall-and-eval-last-sexp 'esf-forward-sexp 'eval-last-sexp))
 
 ;; Piece of code which defines the above inner-{sexp,list} functions.
+;; This makes it possible to batch install the
+;; eval-sexp-fu-eval-sexp-inner-{sexp,list} with below form.
+;; * (define-eval-sexp-fu-eval-sexp eval-sexp-fu-eval-sexp eval-last-sexp)
 (defmacro define-esf-eval-last-sexp-1 (command-name eval-last-sexp)
   "Define an interactive command COMMAND-NAME kind of EVAL-LAST-SEXP
 such that ignores any prefix arguments."
@@ -215,13 +218,13 @@ such that ignores any prefix arguments."
                           (beginning-of-defun)
                           (bounds-of-thing-at-point 'sexp))))
   ;; An example usage of `define-eval-sexp-fu-flash-command'.
-  (when (fboundp 'eek-eval-last-sexp)
-    ;; `eek-eval-last-sexp' is defined in eev.el.
-    (define-eval-sexp-fu-flash-command eek-eval-last-sexp
-      (eval-sexp-fu-flash (cons (save-excursion (eek-backward-sexp)) (point))))
-    )
-  ;; Batch install the eval-sexp-fu-eval-sexp-inner-{sexp,list}.
-  '(define-eval-sexp-fu-eval-sexp eval-sexp-fu-eval-sexp eval-last-sexp)
+  (eval-after-load 'eev
+    '(progn
+      ;; `eek-eval-last-sexp' is defined in eev.el.
+      (define-eval-sexp-fu-flash-command eek-eval-last-sexp
+        (eval-sexp-fu-flash (cons (save-excursion (eek-backward-sexp))
+                                  (point)))
+      )))
   ;; For SLIME.
   (eval-after-load 'slime
     '(progn
