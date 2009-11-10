@@ -241,21 +241,3 @@ such that ignores any prefix arguments."
 
 (provide 'eval-sexp-fu)
 ;;; eval-sexp-fu.el ends here
-
-;;
-(eval-when (load eval)
-  ;; TODO: Extract it out into the documents.
-  (setq eval-sexp-fu-flash-face paren-match-face)
-  (setq eval-sexp-fu-flash-duration 0.15)
-  (setq eval-sexp-fu-flash-doit-function
-        'eval-sexp-fu-flash-doit-hold-on-error)
-
-  (define-key emacs-lisp-mode-map (kbd "s-c s-e")
-    'eval-sexp-fu-eval-sexp-inner-list)
-  (define-key emacs-lisp-mode-map (kbd "s-c s-c s-e")
-    'eval-sexp-fu-eval-sexp-inner-sexp)
-  (define-key lisp-interaction-mode-map (kbd "s-c s-e")
-    'eval-sexp-fu-eval-sexp-inner-list)
-  (define-key lisp-interaction-mode-map (kbd "s-c s-c s-e")
-    'eval-sexp-fu-eval-sexp-inner-sexp)
-  )
