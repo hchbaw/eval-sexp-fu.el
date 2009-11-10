@@ -204,6 +204,7 @@ such that ignores any prefix arguments."
                           (bounds-of-thing-at-point 'sexp))))
   (define-eval-sexp-fu-flash-command eval-defun
     (eval-sexp-fu-flash (save-excursion
+                          (end-of-defun)
                           (beginning-of-defun)
                           (bounds-of-thing-at-point 'sexp))))
   ;; An example usage of `define-eval-sexp-fu-flash-command'.
@@ -227,6 +228,7 @@ such that ignores any prefix arguments."
                               (bounds-of-thing-at-point 'sexp))))
       (define-eval-sexp-fu-flash-command slime-eval-defun
         (eval-sexp-fu-flash (save-excursion
+                              (slime-end-of-defun)
                               (slime-beginning-of-defun)
                               (bounds-of-thing-at-point 'sexp))))
       (define-eval-sexp-fu-eval-sexp eval-sexp-fu-slime-eval-expression
