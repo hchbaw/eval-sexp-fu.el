@@ -48,10 +48,16 @@
 ;;
 ;;  `eval-sexp-fu-flash-face'
 ;;    *Face to use for showing the sexps' overlay during the evaluation.
-;;    default = (quote region)
+;;    default = (quote eval-sexp-fu-flash)
+;;  `eval-sexp-fu-flash-error-face'
+;;    *Face to use for showing the sexps' overlay if the evaluation signaled any error. The error highlighting is take into account only if non-nil value.
+;;    default = (quote eval-sexp-fu-flash-error)
 ;;  `eval-sexp-fu-flash-duration'
 ;;    *For time duration, highlight the evaluating sexps.
-;;    default = 0.25
+;;    default = 0.15
+;;  `eval-sexp-fu-flash-error-duration'
+;;    *For time duration, highlight the evaluating sexps signaled errors.
+;;    default = 0.3
 ;;  `eval-sexp-fu-flash-doit-function'
 ;;    *Function to use for flashing the sexps.
 ;;    default = (quote eval-sexp-fu-flash-doit-simple)
@@ -76,12 +82,31 @@
   :group 'eval-sexp-fu)
 
 ;;; Flashing the sexps during the evaluation for just an eye candy.
-(defcustom eval-sexp-fu-flash-face 'region
+(defface eval-sexp-fu-flash
+  '((((class color)) (:background "blue" :foreground "white" :bold t))
+    (t (:inverse-video t)))
+  "Face for highlighting sexps during evaluation."
+  :group 'eval-sexp-fu)
+(defface eval-sexp-fu-flash-error
+  '((((class color)) (:foreground "red" :bold t))
+    (t (:inverse-video t)))
+  "Face for highlighting sexps signaled errors during evaluation."
+  :group 'eval-sexp-fu)
+
+(defcustom eval-sexp-fu-flash-face 'eval-sexp-fu-flash
   "*Face to use for showing the sexps' overlay during the evaluation."
   :type 'face
   :group 'eval-sexp-fu)
-(defcustom eval-sexp-fu-flash-duration 0.25
+(defcustom eval-sexp-fu-flash-error-face 'eval-sexp-fu-flash-error
+  "*Face to use for showing the sexps' overlay if the evaluation signaled any error. The error highlighting is take into account only if non-nil value."
+  :type 'face
+  :group 'eval-sexp-fu)
+(defcustom eval-sexp-fu-flash-duration 0.15
   "*For time duration, highlight the evaluating sexps."
+  :type 'number
+  :group 'eval-sexp-fu)
+(defcustom eval-sexp-fu-flash-error-duration 0.3
+  "*For time duration, highlight the evaluating sexps signaled errors."
   :type 'number
   :group 'eval-sexp-fu)
 
@@ -91,7 +116,18 @@
 (defun esf-hl-unhighlight-bounds (bounds buf)
   (with-current-buffer buf
     (hlt-unhighlight-region (car bounds) (cdr bounds))))
-(defun* eval-sexp-fu-flash (bounds &optional (face eval-sexp-fu-flash-face))
+(defun esf-flash-error-bounds (bounds buf face)
+  (when face
+    (let ((flash-error (lambda (bounds buf face)
+                         (esf-hl-highlight-bounds bounds face buf)
+                         (run-at-time eval-sexp-fu-flash-error-duration nil
+                                      'esf-hl-unhighlight-bounds
+                                      bounds buf))))
+      (run-at-time (max eval-sexp-fu-flash-error-duration
+                        eval-sexp-fu-flash-duration)
+                   nil flash-error
+                   bounds buf face))))
+(defun* eval-sexp-fu-flash (bounds &optional (face eval-sexp-fu-flash-face) (eface eval-sexp-fu-flash-error-face))
   "BOUNS is either the cell or the function returns, such that (BEGIN . END).
 Reurn the 3 values of bounds, highlighting and un-highlighting procedure.
 This function is convenient to use with `define-eval-sexp-fu-flash-command'."
@@ -100,7 +136,8 @@ This function is convenient to use with `define-eval-sexp-fu-flash-command'."
       (when b
         (values b
                 (apply-partially 'esf-hl-highlight-bounds b face buf)
-                (apply-partially 'esf-hl-unhighlight-bounds b buf))))))
+                (apply-partially 'esf-hl-unhighlight-bounds b buf)
+                (apply-partially 'esf-flash-error-bounds b buf eface))))))
 
 (defcustom eval-sexp-fu-flash-doit-function 'eval-sexp-fu-flash-doit-simple
   "*Function to use for flashing the sexps.
@@ -124,6 +161,18 @@ Please see the actual implementations:
 
 (defmacro esf-konstantly (v)
   `(lambda (&rest _it) ,v))
+(defmacro esf-unwind-protect-with-tracking (normallyp body unwind)
+  (declare (indent 2))
+  `(let (,normallyp)
+     (unwind-protect
+          (prog1 ,body
+            (setq ,normallyp t))
+       ,unwind)))
+(defun esf-flash-doit (do-it-thunk hi unhi eflash)
+  (esf-unwind-protect-with-tracking ret
+      (eval-sexp-fu-flash-doit do-it-thunk hi unhi)
+    (unless ret
+      (funcall eflash))))
 
 ;; Entry point.
 (defmacro define-eval-sexp-fu-flash-command (command form)
@@ -133,13 +182,14 @@ FORM is expected to return 3 values;
 - A bounds (BEGIN . END) to be highlighted or nil.
 - An actual highlighting procedure takes 0 arguments.
 - An actual un-highliting procedure takes 0 arguments.
+- An actual flashing error procedure takes 0 arguments.
 See also `eval-sexp-fu-flash'."
   (declare (indent 1))
   `(defadvice ,command (around eval-sexp-fu-flash-region activate)
      (if eval-sexp-fu-flash-mode
-         (multiple-value-bind (bounds hi unhi) ,form
+         (multiple-value-bind (bounds hi unhi eflash) ,form
            (if bounds
-               (eval-sexp-fu-flash-doit (esf-konstantly ad-do-it) hi unhi)
+               (esf-flash-doit (esf-konstantly ad-do-it) hi unhi eflash)
              ad-do-it))
        ad-do-it)))
 (define-minor-mode eval-sexp-fu-flash-mode
