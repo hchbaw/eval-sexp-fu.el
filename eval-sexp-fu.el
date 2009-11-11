@@ -118,15 +118,16 @@
     (hlt-unhighlight-region (car bounds) (cdr bounds))))
 (defun esf-flash-error-bounds (bounds buf face)
   (when face
-    (let ((flash-error (lambda (bounds buf face)
-                         (esf-hl-highlight-bounds bounds face buf)
-                         (run-at-time eval-sexp-fu-flash-error-duration nil
-                                      'esf-hl-unhighlight-bounds
-                                      bounds buf))))
-      (run-at-time (max eval-sexp-fu-flash-error-duration
-                        eval-sexp-fu-flash-duration)
-                   nil flash-error
-                   bounds buf face))))
+    (let ((flash-error
+           (lambda (bounds buf face)
+             (esf-hl-highlight-bounds bounds face buf)
+             (run-at-time eval-sexp-fu-flash-error-duration nil
+                          'esf-hl-unhighlight-bounds
+                          bounds buf))))
+      (run-with-idle-timer (max eval-sexp-fu-flash-error-duration
+                                eval-sexp-fu-flash-duration)
+                           nil flash-error
+                           bounds buf face))))
 (defun* eval-sexp-fu-flash (bounds &optional (face eval-sexp-fu-flash-face) (eface eval-sexp-fu-flash-error-face))
   "BOUNS is either the cell or the function returns, such that (BEGIN . END).
 Reurn the 3 values of bounds, highlighting and un-highlighting procedure.
