@@ -210,6 +210,7 @@ See also `eval-sexp-fu-flash'."
   (dotimes (_ steps) (backward-up-list))
   (forward-sexp))
 
+(define-esf-eval-last-sexp-1 esf-eval-last-sexp eval-last-sexp)
 (defun eval-sexp-fu-eval-sexp-inner-list (&optional arg)
   "Evaluate the list _currently_ pointed at as sexp; print value in minibuffer.
 
@@ -217,11 +218,11 @@ Interactivelly with numeric prefix argument, call to `backward-up-list' happens 
   (interactive "P")
   (esf-funcall-and-eval-last-sexp (apply-partially
                                    'esf-end-of-backward-up-list arg)
-                                  'eval-last-sexp))
+                                  'esf-eval-last-sexp))
 (defun eval-sexp-fu-eval-sexp-inner-sexp ()
   "Evaluate the sexp _currently_ pointed; print value in minibuffer."
   (interactive)
-  (esf-funcall-and-eval-last-sexp 'esf-forward-sexp 'eval-last-sexp))
+  (esf-funcall-and-eval-last-sexp 'esf-forward-sexp 'esf-eval-last-sexp))
 
 ;; Piece of code which defines the above inner-{sexp,list} functions.
 ;; This makes it possible to batch install the
