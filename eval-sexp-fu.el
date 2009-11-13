@@ -36,7 +36,9 @@
 ;; Below are complete command list:
 ;;
 ;;  `eval-sexp-fu-flash-mode'
-;;    If this mode is on, various `eval-last-sexp'-ish commands will highlight the sexps during evaluation.
+;;    Toggle EvalSexpFuFlash mode on or off. If this mode is on, various `eval-last-sexp'-ish commands will highlight the sexps during evaluation.
+;;  `turn-on-eval-sexp-fu-flash-mode'
+;;    Unequivocally turn on EvalSexpFuFlash mode
 ;;  `eval-sexp-fu-eval-sexp-inner-list'
 ;;    Evaluate the list _currently_ pointed at as sexp; print value in minibuffer.
 ;;  `eval-sexp-fu-eval-sexp-inner-sexp'
@@ -130,8 +132,7 @@
                            bounds buf face))))
 (defun* eval-sexp-fu-flash (bounds &optional (face eval-sexp-fu-flash-face) (eface eval-sexp-fu-flash-error-face))
   "BOUNS is either the cell or the function returns, such that (BEGIN . END).
-Reurn the 3 values of bounds, highlighting and un-highlighting procedure.
-This function is convenient to use with `define-eval-sexp-fu-flash-command'."
+Reurn the 4 values; bounds, highlighting, un-highlighting and error flashing procedure. This function is convenient to use with `define-eval-sexp-fu-flash-command'."
   (flet ((bounds () (if (functionp bounds) (funcall bounds) bounds)))
     (lexical-let ((b (bounds)) (face face) (buf (current-buffer)))
       (when b
@@ -179,7 +180,7 @@ Please see the actual implementations:
 (defmacro define-eval-sexp-fu-flash-command (command form)
   "Install the flasher implemented as the COMMAND's around advice.
 
-FORM is expected to return 3 values;
+FORM is expected to return 4 values;
 - A bounds (BEGIN . END) to be highlighted or nil.
 - An actual highlighting procedure takes 0 arguments.
 - An actual un-highliting procedure takes 0 arguments.
@@ -194,8 +195,13 @@ See also `eval-sexp-fu-flash'."
              ad-do-it))
        ad-do-it)))
 (define-minor-mode eval-sexp-fu-flash-mode
-    "If this mode is on, various `eval-last-sexp'-ish commands will highlight the sexps during evaluation."
+    "Toggle EvalSexpFuFlash mode on or off. If this mode is on, various `eval-last-sexp'-ish commands will highlight the sexps during evaluation."
   :init-value t :global t)
+(defun turn-on-eval-sexp-fu-flash-mode ()
+  "Unequivocally turn on EvalSexpFuFlash mode
+ (see also `eval-sexp-fu-flash-mode')."
+  (interactive)
+  (eval-sexp-fu-flash-mode 1))
 
 ;;; eval-inner- stuff.
 (defun esf-funcall-and-eval-last-sexp (before eval-last-sexp)
