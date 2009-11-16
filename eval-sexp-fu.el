@@ -332,7 +332,13 @@ such that ignores any prefix arguments."
       ;; `eval-sexp-fu-slime-eval-expression-inner-list',
       ;; `eval-sexp-fu-slime-eval-expression-inner-sexp'
       ;; and the pprint variants respectively.
-      )))
+      (require 'bytecomp)
+      (let ((byte-compile-warnings '()))
+        (mapc 'byte-compile
+              '(eval-sexp-fu-slime-eval-expression-inner-list
+                eval-sexp-fu-slime-eval-expression-inner-sexp
+                eval-sexp-fu-slime-pprint-eval-expression-inner-list
+                eval-sexp-fu-slime-pprint-eval-expression-inner-sexp))))))
 
 (provide 'eval-sexp-fu)
 ;;; eval-sexp-fu.el ends here
