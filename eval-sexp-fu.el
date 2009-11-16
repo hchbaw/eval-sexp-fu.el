@@ -133,13 +133,14 @@
 (defun* eval-sexp-fu-flash (bounds &optional (face eval-sexp-fu-flash-face) (eface eval-sexp-fu-flash-error-face))
   "BOUNS is either the cell or the function returns, such that (BEGIN . END).
 Reurn the 4 values; bounds, highlighting, un-highlighting and error flashing procedure. This function is convenient to use with `define-eval-sexp-fu-flash-command'."
-  (flet ((bounds () (if (functionp bounds) (funcall bounds) bounds)))
-    (lexical-let ((b (bounds)) (face face) (buf (current-buffer)))
-      (when b
-        (values b
-                (apply-partially 'esf-hl-highlight-bounds b face buf)
-                (apply-partially 'esf-hl-unhighlight-bounds b buf)
-                (apply-partially 'esf-flash-error-bounds b buf eface))))))
+  (when (ignore-errors (preceding-sexp))
+    (flet ((bounds () (if (functionp bounds) (funcall bounds) bounds)))
+      (lexical-let ((b (bounds)) (face face) (buf (current-buffer)))
+        (when b
+          (values b
+                  (apply-partially 'esf-hl-highlight-bounds b face buf)
+                  (apply-partially 'esf-hl-unhighlight-bounds b buf)
+                  (apply-partially 'esf-flash-error-bounds b buf eface)))))))
 
 (defcustom eval-sexp-fu-flash-doit-function 'eval-sexp-fu-flash-doit-simple
   "*Function to use for flashing the sexps.
@@ -209,12 +210,34 @@ See also `eval-sexp-fu-flash'."
   (save-excursion
     (funcall before)
     (call-interactively eval-last-sexp)))
-(defun esf-forward-sexp ()
-  (if (eq (char-after) ? ) (ignore) (forward-sexp)))
-(defun esf-end-of-backward-up-list (steps)
+(require 'rx)
+(defun esf-forward-inner-sexp0 ()
+  (cond ((looking-at (rx (or (syntax symbol) (syntax word))))
+         (forward-sexp))
+        ((looking-at (rx (syntax open-parenthesis)))
+         (forward-sexp))
+        (t (let ((prev-pt
+                  (save-excursion (backward-sexp) (forward-sexp) (point)))
+                 (next-pt
+                  (save-excursion (forward-sexp) (backward-sexp) (point))))
+             (if (< (- next-pt (point)) (- (point) prev-pt))
+                 (forward-sexp)
+               (backward-sexp)
+               (forward-sexp))))))
+(defun esf-forward-inner-sexp ()
+  (condition-case e
+      (esf-forward-inner-sexp0)
+    (scan-error nil)))
+
+(defun esf-end-of-backward-up-inner-list0 (steps)
   (unless steps (setq steps 1))
+  (when (looking-at (rx (syntax open-parenthesis))) (decf steps))
   (dotimes (_ steps) (backward-up-list))
   (forward-sexp))
+(defun esf-end-of-backward-up-inner-list (steps)
+  (condition-case e
+      (esf-end-of-backward-up-inner-list0 steps)
+    (scan-error nil)))
 
 (defun eval-sexp-fu-eval-sexp-inner-list (&optional arg)
   "Evaluate the list _currently_ pointed at as sexp; print value in minibuffer.
@@ -222,12 +245,12 @@ See also `eval-sexp-fu-flash'."
 Interactivelly with numeric prefix argument, call to `backward-up-list' happens several times. This function is an \"Evaluate this N lists, please.\" thing."
   (interactive "P")
   (esf-funcall-and-eval-last-sexp (apply-partially
-                                   'esf-end-of-backward-up-list arg)
+                                   'esf-end-of-backward-up-inner-list arg)
                                   'esf-eval-last-sexp))
 (defun eval-sexp-fu-eval-sexp-inner-sexp ()
   "Evaluate the sexp _currently_ pointed; print value in minibuffer."
   (interactive)
-  (esf-funcall-and-eval-last-sexp 'esf-forward-sexp 'esf-eval-last-sexp))
+  (esf-funcall-and-eval-last-sexp 'esf-forward-inner-sexp 'esf-eval-last-sexp))
 
 (defmacro define-esf-eval-last-sexp-1 (command-name eval-last-sexp)
   "Define an interactive command COMMAND-NAME kind of EVAL-LAST-SEXP
@@ -249,11 +272,12 @@ such that ignores any prefix arguments."
   `(progn
      (defun ,inner-sexp ()
        (interactive)
-       (esf-funcall-and-eval-last-sexp 'esf-forward-sexp ',eval-last-sexp))
+       (esf-funcall-and-eval-last-sexp 'esf-forward-inner-sexp
+                                       ',eval-last-sexp))
      (defun ,inner-list (&optional arg)
        (interactive "P")
        (esf-funcall-and-eval-last-sexp (apply-partially
-                                        'esf-end-of-backward-up-list arg)
+                                        'esf-end-of-backward-up-inner-list arg)
                                        ',eval-last-sexp))))
 (defmacro define-eval-sexp-fu-eval-sexp (command-name-prefix eval-last-sexp)
   "Define -inner-sexp and -inner-list interactive commands prefixed by COMMAND-NAME-PREFIX based on EVAL-LAST-SEXP. Actual work is done by `define-esf-eval-sexp*'."
@@ -283,8 +307,7 @@ such that ignores any prefix arguments."
       ;; `eek-eval-last-sexp' is defined in eev.el.
       (define-eval-sexp-fu-flash-command eek-eval-last-sexp
         (eval-sexp-fu-flash (cons (save-excursion (eek-backward-sexp))
-                                  (point)))
-      )))
+                                  (point))))))
   ;; For SLIME.
   (eval-after-load 'slime
     '(progn
