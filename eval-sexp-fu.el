@@ -24,7 +24,7 @@
 ;; Small functionality enhancements for evaluating sexps.
 ;; This package provides:
 ;; - Flashing the sexps during the evaluation.
-;; - `eval-last-sexp' variants (innser-list/inner-sexp).
+;; - `eval-last-sexp' variants (inner-list/inner-sexp).
 
 ;;; Installation:
 ;;
@@ -36,7 +36,7 @@
 ;; Below are complete command list:
 ;;
 ;;  `eval-sexp-fu-flash-mode'
-;;    Toggle EvalSexpFuFlash mode on or off. If this mode is on, various `eval-last-sexp'-ish commands will highlight the sexps during evaluation.
+;;    Toggle EvalSexpFuFlash mode on or off. If this mode is on, some `eval-last-sexp'-ish commands will highlight the sexps during evaluation.
 ;;  `turn-on-eval-sexp-fu-flash-mode'
 ;;    Unequivocally turn on EvalSexpFuFlash mode
 ;;  `eval-sexp-fu-eval-sexp-inner-list'
@@ -195,7 +195,7 @@ See also `eval-sexp-fu-flash'."
              ad-do-it))
        ad-do-it)))
 (define-minor-mode eval-sexp-fu-flash-mode
-    "Toggle EvalSexpFuFlash mode on or off. If this mode is on, various `eval-last-sexp'-ish commands will highlight the sexps during evaluation."
+    "Toggle EvalSexpFuFlash mode on or off. If this mode is on, some `eval-last-sexp'-ish commands will highlight the sexps during evaluation."
   :init-value t :global t)
 (defun turn-on-eval-sexp-fu-flash-mode ()
   "Unequivocally turn on EvalSexpFuFlash mode
@@ -216,7 +216,6 @@ See also `eval-sexp-fu-flash'."
   (dotimes (_ steps) (backward-up-list))
   (forward-sexp))
 
-(define-esf-eval-last-sexp-1 esf-eval-last-sexp eval-last-sexp)
 (defun eval-sexp-fu-eval-sexp-inner-list (&optional arg)
   "Evaluate the list _currently_ pointed at as sexp; print value in minibuffer.
 
@@ -230,10 +229,6 @@ Interactivelly with numeric prefix argument, call to `backward-up-list' happens 
   (interactive)
   (esf-funcall-and-eval-last-sexp 'esf-forward-sexp 'esf-eval-last-sexp))
 
-;; Piece of code which defines the above inner-{sexp,list} functions.
-;; This makes it possible to batch install the
-;; eval-sexp-fu-eval-sexp-inner-{sexp,list} with below form.
-;; * (define-eval-sexp-fu-eval-sexp eval-sexp-fu-eval-sexp eval-last-sexp)
 (defmacro define-esf-eval-last-sexp-1 (command-name eval-last-sexp)
   "Define an interactive command COMMAND-NAME kind of EVAL-LAST-SEXP
 such that ignores any prefix arguments."
@@ -241,6 +236,13 @@ such that ignores any prefix arguments."
      (interactive)
      (let (current-prefix-arg)
        (call-interactively ',eval-last-sexp))))
+(define-esf-eval-last-sexp-1 esf-eval-last-sexp eval-last-sexp)
+
+;; Piece of code which defines the above inner-{sexp,list} functions.
+;; This makes it possible to batch install the
+;; eval-sexp-fu-eval-sexp-inner-{sexp,list} with below form.
+;; * (define-eval-sexp-fu-eval-sexp eval-sexp-fu-eval-sexp eval-last-sexp)
+;; Used by making the `slime-eval-last-expression' variant functions.
 (defmacro define-esf-eval-sexp* (eval-last-sexp inner-sexp inner-list)
   "Based on EVAL-LAST-SEXP, define INNER-SEXP and INNER-LIST interactive commands."
   (declare (indent 1))
