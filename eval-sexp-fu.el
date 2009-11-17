@@ -137,10 +137,12 @@ Reurn the 4 values; bounds, highlighting, un-highlighting and error flashing pro
     (flet ((bounds () (if (functionp bounds) (funcall bounds) bounds)))
       (lexical-let ((b (bounds)) (face face) (buf (current-buffer)))
         (when b
-          (values b
-                  (apply-partially 'esf-hl-highlight-bounds b face buf)
-                  (apply-partially 'esf-hl-unhighlight-bounds b buf)
-                  (apply-partially 'esf-flash-error-bounds b buf eface)))))))
+          (esf-flash b face eface buf))))))
+(defun esf-flash (bounds face eface buf)
+  (values bounds
+          (apply-partially 'esf-hl-highlight-bounds bounds face buf)
+          (apply-partially 'esf-hl-unhighlight-bounds bounds buf)
+          (apply-partially 'esf-flash-error-bounds bounds buf eface)))
 
 (defcustom eval-sexp-fu-flash-doit-function 'eval-sexp-fu-flash-doit-simple
   "*Function to use for flashing the sexps.
