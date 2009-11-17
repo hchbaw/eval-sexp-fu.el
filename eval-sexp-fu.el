@@ -210,34 +210,43 @@ See also `eval-sexp-fu-flash'."
   (save-excursion
     (funcall before)
     (call-interactively eval-last-sexp)))
+
 (require 'rx)
 (defun esf-forward-inner-sexp0 ()
-  (cond ((looking-at (rx (or (syntax symbol) (syntax word))))
-         (forward-sexp))
-        ((looking-at (rx (syntax open-parenthesis)))
-         (forward-sexp))
-        (t (let ((prev-pt
-                  (save-excursion (backward-sexp) (forward-sexp) (point)))
-                 (next-pt
-                  (save-excursion (forward-sexp) (backward-sexp) (point))))
-             (if (< (- next-pt (point)) (- (point) prev-pt))
-                 (forward-sexp)
-               (backward-sexp)
+  (flet ((poss ()
+           (let
+               ((prev (save-excursion (backward-sexp) (forward-sexp) (point)))
+                (next (save-excursion (forward-sexp) (backward-sexp) (point))))
+             (list prev (line-number-at-pos prev)
+                   next (line-number-at-pos next)
+                   (point) (line-number-at-pos)))))
+    (cond ((looking-at (rx (or (syntax symbol) (syntax word)
+                               (syntax open-parenthesis))))
+           (forward-sexp))
+          (t (destructuring-bind (pp pl np nl cp cl) (poss)
+               (cond ((= pl cl) (backward-sexp))
+                     ((= nl cl) (ignore))
+                     ((< (- cl pl) (- nl cl)) (backward-sexp))
+                     ((< (- nl cl) (- cl pl)) (ignore))
+                     (t (cond ((< (- cp pp) (- np cp)) (backward-sexp))
+                              ((< (- np cp) (- cp pp)) (ignore))
+                              (t (ignore)))))
                (forward-sexp))))))
 (defun esf-forward-inner-sexp ()
-  (condition-case e
+  (condition-case nil
       (esf-forward-inner-sexp0)
     (scan-error nil)))
-
-(defun esf-end-of-backward-up-inner-list0 (steps)
+(defun esf-backward-up-inner-list0 (steps)
   (unless steps (setq steps 1))
   (when (looking-at (rx (syntax open-parenthesis))) (decf steps))
-  (dotimes (_ steps) (backward-up-list))
-  (forward-sexp))
-(defun esf-end-of-backward-up-inner-list (steps)
-  (condition-case e
-      (esf-end-of-backward-up-inner-list0 steps)
+  (dotimes (_ steps) (backward-up-list)))
+(defun esf-backward-up-inner-list (steps)
+  (condition-case nil
+      (esf-backward-up-inner-list0 steps)
     (scan-error nil)))
+(defun esf-end-of-backward-up-inner-list (steps)
+  (esf-backward-up-inner-list steps)
+  (esf-forward-inner-sexp))
 
 (defun eval-sexp-fu-eval-sexp-inner-list (&optional arg)
   "Evaluate the list _currently_ pointed at as sexp; print value in minibuffer.
