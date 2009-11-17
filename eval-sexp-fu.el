@@ -312,7 +312,6 @@ such that ignores any prefix arguments."
                           (end-of-defun)
                           (beginning-of-defun)
                           (bounds-of-thing-at-point 'sexp))))
-  ;; An example usage of `define-eval-sexp-fu-flash-command'.
   (eval-after-load 'eev
     '(progn
       ;; `eek-eval-last-sexp' is defined in eev.el.
