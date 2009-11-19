@@ -1,4 +1,4 @@
-;;; eval-sexp-fu.el --- Small functionality enhancements for evaluating sexps.
+;;; eval-sexp-fu.el --- Tiny functionality enhancements for evaluating sexps.
 
 ;; Copyright (C) 2009 Takeshi Banse <takebi@laafc.net>
 ;; Author: Takeshi Banse <takebi@laafc.net>
@@ -21,7 +21,7 @@
 
 ;;; Commentary:
 ;;
-;; Small functionality enhancements for evaluating sexps.
+;; Tiny functionality enhancements for evaluating sexps.
 ;; This package provides:
 ;; - Flashing the sexps during the evaluation.
 ;; - `eval-last-sexp' variants (inner-list/inner-sexp).
@@ -79,7 +79,7 @@
 (require 'highlight)
 
 (defgroup eval-sexp-fu nil
-  "Small functionality enhancements for evaluating sexps."
+  "Tiny functionality enhancements for evaluating sexps."
   :prefix "eval-sexp-fu-"
   :group 'eval-sexp-fu)
 
