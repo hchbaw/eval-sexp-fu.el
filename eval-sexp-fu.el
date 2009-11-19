@@ -226,14 +226,15 @@ See also `eval-sexp-fu-flash'."
                                (syntax open-parenthesis))))
            (forward-sexp))
           (t (destructuring-bind (pp pl np nl cp cl) (poss)
-               (cond ((= pl cl) (backward-sexp))
-                     ((= nl cl) (ignore))
-                     ((< (- cl pl) (- nl cl)) (backward-sexp))
-                     ((< (- nl cl) (- cl pl)) (ignore))
-                     (t (cond ((< (- cp pp) (- np cp)) (backward-sexp))
-                              ((< (- np cp) (- cp pp)) (ignore))
-                              (t (ignore)))))
-               (forward-sexp))))))
+               (cond ((and (<=  pp cp) (<= cp np))
+                      (cond ((= pl cl) (backward-sexp))
+                            ((= nl cl))
+                            ((< (- cl pl) (- nl cl)) (backward-sexp))
+                            ((< (- nl cl) (- cl pl)))
+                            (t (backward-sexp)))
+                      (forward-sexp))
+                     (t (backward-sexp) (forward-sexp))))))))
+
 (defun esf-forward-inner-sexp ()
   (condition-case nil
       (esf-forward-inner-sexp0)
@@ -346,6 +347,116 @@ such that ignores any prefix arguments."
   (esf-initialize)
   (eval-after-load 'slime
     '(esf-initialize-slime)))
+
+(dont-compile
+  (when (fboundp 'expectations)
+    (expectations
+      (desc "esf-forward-inner-sexp0")
+      (expect ?p
+        (with-temp-buffer
+          (emacs-lisp-mode)
+          (insert "s+exp")
+          (goto-char (point-min))
+          (esf-forward-inner-sexp0)
+          (char-before)))
+      (expect ?p
+        (with-temp-buffer
+          (emacs-lisp-mode)
+          (insert "s+exp")
+          (goto-char (1+ (point-min)))
+          (esf-forward-inner-sexp0)
+          (char-before)))
+      (expect ?\)
+        (with-temp-buffer
+          (emacs-lisp-mode)
+          (insert "s(exp)")
+          (goto-char (1+ (point-min)))
+          (esf-forward-inner-sexp0)
+          (char-before)))
+      (desc "esf-forward-inner-sexp0 same line, but far near the next")
+      ;; Always previous, is this OK?
+      (expect ?0
+        (with-temp-buffer
+          (emacs-lisp-mode)
+          (insert "sexp0   sexp1")
+          (goto-char (+ (point-min) 7))
+          (esf-forward-inner-sexp0)
+          (char-before)))
+      (desc "esf-forward-inner-sexp0 across lines")
+      (expect ?0
+        (with-temp-buffer
+          (emacs-lisp-mode)
+          (insert "sexp0\n\n\n\nsexp1")
+          (goto-char (point-min))
+          (esf-forward-inner-sexp0)
+          (char-before)))
+      (expect ?0
+        (with-temp-buffer
+          (emacs-lisp-mode)
+          (insert "sexp0\n\n\n\nsexp1")
+          (goto-char (point-min))
+          (forward-line)
+          (esf-forward-inner-sexp0)
+          (char-before)))
+      (expect ?1
+        (with-temp-buffer
+          (emacs-lisp-mode)
+          (insert "sexp0\n\n\n\nsexp1")
+          (goto-char (point-min))
+          (forward-line 3)
+          (esf-forward-inner-sexp0)
+          (char-before)))
+      (expect ?1
+        (with-temp-buffer
+          (emacs-lisp-mode)
+          (insert "sexp0\n\n\n\nsexp1")
+          (goto-char (point-min))
+          (forward-line 3)
+          (esf-forward-inner-sexp0)
+          (char-before)))
+      (expect ?1
+        (with-temp-buffer
+          (emacs-lisp-mode)
+          (insert "sexp0\n\n\n\nsexp1")
+          (goto-char (point-min))
+          (forward-line 4)
+          (esf-forward-inner-sexp0)
+          (char-before)))
+      (desc "esf-forward-inner-sexp0 across lines (equal delta)")
+      ;; Always previous lines', is this OK?
+      (expect ?0
+        (with-temp-buffer
+          (emacs-lisp-mode)
+          (insert "sexp0\n\n\n\nsexp1")
+          (goto-char (point-min))
+          (forward-line 2)
+          (esf-forward-inner-sexp0)
+          (char-before)))
+      (desc "esf-forward-inner-sexp0 no more")
+      (expect ?0
+        (with-temp-buffer
+          (emacs-lisp-mode)
+          (insert "sexp0\n\n")
+          (goto-char (point-max))
+          (esf-forward-inner-sexp0)
+          (char-before)))
+      (desc "esf-forward-inner-sexp0 no less")
+      (expect ?0
+        (with-temp-buffer
+          (emacs-lisp-mode)
+          (insert "\n\nsexp0")
+          (goto-char (point-min))
+          (esf-forward-inner-sexp0)
+          (char-before)))
+      (desc "esf-forward-inner-sexp0 no any")
+      (expect 5
+        (with-temp-buffer
+          (emacs-lisp-mode)
+          (insert "\n\n\n\n")
+          (goto-char (point-min))
+          (esf-forward-inner-sexp0)
+          (point)))
+      )))
 
 (provide 'eval-sexp-fu)
 ;;; eval-sexp-fu.el ends here
