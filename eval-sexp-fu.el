@@ -60,6 +60,9 @@
 ;;  `eval-sexp-fu-flash-error-duration'
 ;;    *For time duration, highlight the evaluating sexps signaled errors.
 ;;    default = 0.3
+;;  `eval-sexp-fu-flash-function'
+;;    *Function to be used to create all of the actual flashing implementations.
+;;    default = (quote eval-sexp-fu-flash-default)
 ;;  `eval-sexp-fu-flash-doit-function'
 ;;    *Function to use for flashing the sexps.
 ;;    default = (quote eval-sexp-fu-flash-doit-simple)
@@ -111,6 +114,10 @@
   "*For time duration, highlight the evaluating sexps signaled errors."
   :type 'number
   :group 'eval-sexp-fu)
+(defcustom eval-sexp-fu-flash-function 'eval-sexp-fu-flash-default
+  "*Function to be used to create all of the actual flashing implementations."
+  :type 'function
+  :group 'eval-sexp-fu)
 
 (defun esf-hl-highlight-bounds (bounds face buf)
   (with-current-buffer buf
@@ -135,14 +142,16 @@
 Reurn the 4 values; bounds, highlighting, un-highlighting and error flashing procedure. This function is convenient to use with `define-eval-sexp-fu-flash-command'."
   (when (ignore-errors (preceding-sexp))
     (flet ((bounds () (if (functionp bounds) (funcall bounds) bounds)))
-      (lexical-let ((b (bounds)) (face face) (buf (current-buffer)))
+      (let ((b (bounds)) (buf (current-buffer)))
         (when b
-          (esf-flash b face eface buf))))))
-(defun esf-flash (bounds face eface buf)
-  (values bounds
-          (apply-partially 'esf-hl-highlight-bounds bounds face buf)
-          (apply-partially 'esf-hl-unhighlight-bounds bounds buf)
-          (apply-partially 'esf-flash-error-bounds bounds buf eface)))
+          (funcall eval-sexp-fu-flash-function b face eface buf))))))
+(defun eval-sexp-fu-flash-default (bounds face eface buf)
+  "Create all of the actual flashing implementations. See also `eval-sexp-fu-flash'."
+  (lexical-let ((bounds bounds) (face face) (eface eface) (buf buf))
+    (values bounds
+            (apply-partially 'esf-hl-highlight-bounds bounds face buf)
+            (apply-partially 'esf-hl-unhighlight-bounds bounds buf)
+            (apply-partially 'esf-flash-error-bounds bounds buf eface))))
 
 (defcustom eval-sexp-fu-flash-doit-function 'eval-sexp-fu-flash-doit-simple
   "*Function to use for flashing the sexps.
@@ -234,7 +243,6 @@ See also `eval-sexp-fu-flash'."
                             (t (backward-sexp)))
                       (forward-sexp))
                      (t (backward-sexp) (forward-sexp))))))))
-
 (defun esf-forward-inner-sexp ()
   (condition-case nil
       (esf-forward-inner-sexp0)
