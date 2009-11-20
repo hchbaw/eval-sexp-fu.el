@@ -152,11 +152,10 @@ Reurn the 4 values; bounds, highlighting, un-highlighting and error flashing pro
           (funcall eval-sexp-fu-flash-function b face eface buf))))))
 (defun eval-sexp-fu-flash-default (bounds face eface buf)
   "Create all of the actual flashing implementations. See also `eval-sexp-fu-flash'."
-  (lexical-let ((bounds bounds) (face face) (eface eface) (buf buf))
-    (values bounds
-            (apply-partially 'esf-hl-highlight-bounds bounds face buf)
-            (apply-partially 'esf-hl-unhighlight-bounds bounds buf)
-            (apply-partially 'esf-flash-error-bounds bounds buf eface))))
+  (values bounds
+          (apply-partially 'esf-hl-highlight-bounds bounds face buf)
+          (apply-partially 'esf-hl-unhighlight-bounds bounds buf)
+          (apply-partially 'esf-flash-error-bounds bounds buf eface)))
 
 (defcustom eval-sexp-fu-flash-doit-function 'eval-sexp-fu-flash-doit-simple
   "*Function to use for flashing the sexps.
