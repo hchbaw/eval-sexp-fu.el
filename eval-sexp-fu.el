@@ -76,6 +76,11 @@
 ;; `eval-sexp-fu-slime-eval-expression-inner-sexp'
 ;; and the pprint variants respectively.
 
+;;; History:
+
+;; v0.1.0
+;; Initial version.
+
 ;;; Code:
 
 (eval-when-compile (require 'cl))
