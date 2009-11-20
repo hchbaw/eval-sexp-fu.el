@@ -157,6 +157,35 @@ Reurn the 4 values; bounds, highlighting, un-highlighting and error flashing pro
           (apply-partially 'esf-hl-unhighlight-bounds bounds buf)
           (apply-partially 'esf-flash-error-bounds bounds buf eface)))
 
+(defun eval-sexp-fu-flash-paren-only-if (pred bounds face eface buf)
+  "Create the \"paren-only\" flashing implementations. See also `eval-sexp-fu-flash'."
+  (if (funcall pred bounds buf)
+      (let ((hi (lambda (left right face buf)
+                  (esf-hl-highlight-bounds left face buf)
+                  (esf-hl-highlight-bounds right face buf)))
+            (uh (lambda (left right buf)
+                  (esf-hl-unhighlight-bounds left buf)
+                  (esf-hl-unhighlight-bounds right buf)))
+            (ef (lambda (left right eface buf)
+                  (esf-flash-error-bounds left buf eface)
+                  (esf-flash-error-bounds right buf eface)))
+            (lparen (cons (car bounds) (1+ (car bounds))))
+            (rparen (cons (1- (cdr bounds)) (cdr bounds))))
+        (values bounds
+                (apply-partially hi lparen rparen face buf)
+                (apply-partially uh lparen rparen buf)
+                (apply-partially ef lparen rparen eface buf)))
+    (eval-sexp-fu-flash-default bounds face eface buf)))
+(defun eval-sexp-fu-flash-surrounded-paren-p (bounds buf)
+  "Non-nil if BOUNDS of BUF is being surrounded by open and close parenthesis."
+  (with-current-buffer buf
+    (and (save-excursion
+           (goto-char (car bounds))
+           (looking-at (rx (syntax open-parenthesis))))
+         (save-excursion
+           (goto-char (1- (cdr bounds)))
+           (looking-at (rx (syntax close-parenthesis)))))))
+
 (defcustom eval-sexp-fu-flash-doit-function 'eval-sexp-fu-flash-doit-simple
   "*Function to use for flashing the sexps.
 
