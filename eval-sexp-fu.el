@@ -124,6 +124,22 @@
   :type 'function
   :group 'eval-sexp-fu)
 
+;;; Tools
+(defmacro esf-konstantly (v)
+  `(lambda (&rest _it) ,v))
+(defun esf-every0 (pred xs)
+  (labels ((rec (pred xs acc)
+             (if (null xs)
+                 acc
+               (let ((it (funcall pred (car xs))))
+                 (and it (rec pred (cdr xs) it))))))
+    (rec pred xs nil)))
+(defun esf-every-pred (&rest preds)
+  (lexical-let ((preds preds))
+    (lambda (x)
+      (esf-every0 (lambda (pred) (funcall pred x))
+                  preds))))
+
 (defun esf-hl-highlight-bounds (bounds face buf)
   (with-current-buffer buf
     (hlt-highlight-region (car bounds) (cdr bounds) face)))
@@ -157,34 +173,48 @@ Reurn the 4 values; bounds, highlighting, un-highlighting and error flashing pro
           (apply-partially 'esf-hl-unhighlight-bounds bounds buf)
           (apply-partially 'esf-flash-error-bounds bounds buf eface)))
 
-(defun eval-sexp-fu-flash-paren-only-if (pred bounds face eface buf)
-  "Create the \"paren-only\" flashing implementations. See also `eval-sexp-fu-flash'."
-  (if (funcall pred bounds buf)
-      (let ((hi (lambda (left right face buf)
-                  (esf-hl-highlight-bounds left face buf)
-                  (esf-hl-highlight-bounds right face buf)))
-            (uh (lambda (left right buf)
-                  (esf-hl-unhighlight-bounds left buf)
-                  (esf-hl-unhighlight-bounds right buf)))
-            (ef (lambda (left right eface buf)
-                  (esf-flash-error-bounds left buf eface)
-                  (esf-flash-error-bounds right buf eface)))
-            (lparen (cons (car bounds) (1+ (car bounds))))
-            (rparen (cons (1- (cdr bounds)) (cdr bounds))))
-        (values bounds
-                (apply-partially hi lparen rparen face buf)
-                (apply-partially uh lparen rparen buf)
-                (apply-partially ef lparen rparen eface buf)))
-    (eval-sexp-fu-flash-default bounds face eface buf)))
-(defun eval-sexp-fu-flash-surrounded-paren-p (bounds buf)
-  "Non-nil if BOUNDS of BUF is being surrounded by open and close parenthesis."
+(defun eval-sexp-fu-flash-paren-only (bounds face eface buf)
+  (esf-flash-paren-only-if (esf-every-pred
+                            'esf-flash-paren-surrounded-p
+                            'esf-flash-paren-visible-p)
+                           bounds face eface buf))
+(defun esf-flash-paren-only-if (pred bounds face eface buf)
+  (let ((flash (if (funcall pred (cons bounds buf))
+                   'esf-flash-paren-only
+                 'eval-sexp-fu-flash-default)))
+    (funcall flash bounds face eface buf)))
+(defun esf-flash-paren-only (bounds face eface buf)
+  "Create the \"paren-only\" flashing implementations."
+  (let ((hi (lambda (left right face buf)
+              (esf-hl-highlight-bounds left face buf)
+              (esf-hl-highlight-bounds right face buf)))
+        (uh (lambda (left right buf)
+              (esf-hl-unhighlight-bounds left buf)
+              (esf-hl-unhighlight-bounds right buf)))
+        (ef (lambda (left right eface buf)
+              (esf-flash-error-bounds left buf eface)
+              (esf-flash-error-bounds right buf eface)))
+        (rparen (cons (1- (cdr bounds)) (cdr bounds)))
+        (lparen (cons (car bounds) (save-excursion
+                                     (goto-char (car bounds))
+                                     (down-list)
+                                     (point)))))
+    (values bounds
+            (apply-partially hi lparen rparen face buf)
+            (apply-partially uh lparen rparen buf)
+            (apply-partially ef lparen rparen eface buf))))
+(defun* esf-flash-paren-surrounded-p ((bounds . buf))
   (with-current-buffer buf
     (and (save-excursion
-           (goto-char (car bounds))
-           (looking-at (rx (syntax open-parenthesis))))
-         (save-excursion
            (goto-char (1- (cdr bounds)))
-           (looking-at (rx (syntax close-parenthesis)))))))
+           (looking-at (rx (syntax close-parenthesis))))
+         (save-excursion
+           (goto-char (car bounds))
+           (looking-at (rx (or (syntax expression-prefix)
+                               (syntax open-parenthesis))))))))
+(defun* esf-flash-paren-visible-p ((bounds . _buf))
+  (and (pos-visible-in-window-p (cdr bounds))
+       (pos-visible-in-window-p (car bounds))))
 
 (defcustom eval-sexp-fu-flash-doit-function 'eval-sexp-fu-flash-doit-simple
   "*Function to use for flashing the sexps.
@@ -206,8 +236,6 @@ Please see the actual implementations:
        (funcall do-it-thunk)
     (run-at-time eval-sexp-fu-flash-duration nil unhi)))
 
-(defmacro esf-konstantly (v)
-  `(lambda (&rest _it) ,v))
 (defmacro esf-unwind-protect-with-tracking (normallyp body unwind)
   (declare (indent 2))
   `(let (,normallyp)
@@ -392,6 +420,13 @@ such that ignores any prefix arguments."
 (dont-compile
   (when (fboundp 'expectations)
     (expectations
+      (desc "esf-every-pred")
+      (expect "value"
+        (funcall (esf-every-pred 'stringp 'identity)
+                 "value"))
+      (expect t
+        (not (funcall (every-pred 'stringp 'numberp 'identity)
+                      "value")))
       (desc "esf-forward-inner-sexp0")
       (expect ?p
         (with-temp-buffer
