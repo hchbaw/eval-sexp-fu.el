@@ -78,6 +78,9 @@
 
 ;;; History:
 
+;; v0.3.0
+;; Relax `eval-sexp-fu-flash' with omitting the "sexp" check.
+
 ;; v0.2.0
 ;; Add the paren-only flashing variant.
 
