@@ -121,7 +121,8 @@
   :group 'eval-sexp-fu)
 (defcustom eval-sexp-fu-flash-function 'eval-sexp-fu-flash-default
   "*Function to be used to create all of the actual flashing implementations."
-  :type 'function
+  :type '(choice (function-item eval-sexp-fu-flash-default)
+                 (function-item eval-sexp-fu-flash-paren-only))
   :group 'eval-sexp-fu)
 
 ;;; Tools
