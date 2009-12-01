@@ -165,11 +165,10 @@
 (defun* eval-sexp-fu-flash (bounds &optional (face eval-sexp-fu-flash-face) (eface eval-sexp-fu-flash-error-face))
   "BOUNS is either the cell or the function returns, such that (BEGIN . END).
 Reurn the 4 values; bounds, highlighting, un-highlighting and error flashing procedure. This function is convenient to use with `define-eval-sexp-fu-flash-command'."
-  (when (ignore-errors (preceding-sexp))
-    (flet ((bounds () (if (functionp bounds) (funcall bounds) bounds)))
-      (let ((b (bounds)) (buf (current-buffer)))
-        (when b
-          (funcall eval-sexp-fu-flash-function b face eface buf))))))
+  (flet ((bounds () (if (functionp bounds) (funcall bounds) bounds)))
+    (let ((b (bounds)))
+      (when b
+        (funcall eval-sexp-fu-flash-function b face eface (current-buffer))))))
 (defun eval-sexp-fu-flash-default (bounds face eface buf)
   "Create all of the actual flashing implementations. See also `eval-sexp-fu-flash'."
   (values bounds
@@ -378,34 +377,40 @@ such that ignores any prefix arguments."
 ;;; initialize.
 (defun esf-initialize ()
   (define-eval-sexp-fu-flash-command eval-last-sexp
-    (eval-sexp-fu-flash (save-excursion
-                          (backward-char)
-                          (bounds-of-thing-at-point 'sexp))))
+    (eval-sexp-fu-flash (when (ignore-errors (preceding-sexp))
+                          (save-excursion
+                            (backward-char)
+                            (bounds-of-thing-at-point 'sexp)))))
   (define-eval-sexp-fu-flash-command eval-defun
-    (eval-sexp-fu-flash (save-excursion
-                          (end-of-defun)
-                          (beginning-of-defun)
-                          (bounds-of-thing-at-point 'sexp))))
+    (eval-sexp-fu-flash (when (ignore-errors (preceding-sexp))
+                          (save-excursion
+                            (end-of-defun)
+                            (beginning-of-defun)
+                            (bounds-of-thing-at-point 'sexp)))))
   (eval-after-load 'eev
     '(progn
       ;; `eek-eval-last-sexp' is defined in eev.el.
       (define-eval-sexp-fu-flash-command eek-eval-last-sexp
-        (eval-sexp-fu-flash (cons (save-excursion (eek-backward-sexp))
-                                  (point)))))))
+        (eval-sexp-fu-flash (when (thing-at-point 'sexp)
+                              (cons (save-excursion (eek-backward-sexp))
+                                    (point))))))))
 (defun esf-initialize-slime ()
   (define-eval-sexp-fu-flash-command slime-eval-last-expression
     (eval-sexp-fu-flash (save-excursion
                           (backward-char)
-                          (bounds-of-thing-at-point 'sexp))))
+                          (when (slime-sexp-at-point)
+                            (bounds-of-thing-at-point 'sexp)))))
   (define-eval-sexp-fu-flash-command slime-pprint-eval-last-expression
     (eval-sexp-fu-flash (save-excursion
                           (backward-char)
-                          (bounds-of-thing-at-point 'sexp))))
+                          (when (slime-sexp-at-point)
+                            (bounds-of-thing-at-point 'sexp)))))
   (define-eval-sexp-fu-flash-command slime-eval-defun
     (eval-sexp-fu-flash (save-excursion
                           (slime-end-of-defun)
                           (slime-beginning-of-defun)
-                          (bounds-of-thing-at-point 'sexp))))
+                          (when (slime-sexp-at-point)
+                            (bounds-of-thing-at-point 'sexp)))))
   (progn
     ;; Defines:
     ;; `eval-sexp-fu-slime-eval-expression-inner-list',
