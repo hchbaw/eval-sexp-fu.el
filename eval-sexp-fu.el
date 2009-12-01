@@ -78,6 +78,9 @@
 
 ;;; History:
 
+;; v0.2.0
+;; Add the paren-only flashing variant.
+
 ;; v0.1.0
 ;; Initial version.
 
