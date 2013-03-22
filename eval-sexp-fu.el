@@ -78,6 +78,9 @@
 
 ;;; History:
 
+;; v0.4.0
+;; Workaround bug#13952 fix about `end-of-sexp'.
+
 ;; v0.3.0
 ;; Relax `eval-sexp-fu-flash' with omitting the "sexp" check.
 
