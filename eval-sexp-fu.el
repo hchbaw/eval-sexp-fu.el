@@ -377,12 +377,22 @@ such that ignores any prefix arguments."
                      (intern (concat (symbol-name command-name-prefix) post)))
                    '("-inner-sexp" "-inner-list"))))))
 
+;; bug#13952
+(if (version< "24.3.50" emacs-version)
+    (defmacro with-esf-end-of-sexp (&rest body)
+      (declare (indent 0))
+      `(progn ,@body))
+  (defmacro with-esf-end-of-sexp (&rest body)
+    (declare (indent 0))
+    `(save-excursion
+       (backward-char)
+       ,@body)))
+
 ;;; initialize.
 (defun esf-initialize ()
   (define-eval-sexp-fu-flash-command eval-last-sexp
     (eval-sexp-fu-flash (when (ignore-errors (preceding-sexp))
-                          (save-excursion
-                            (backward-char)
+                          (with-esf-end-of-sexp
                             (bounds-of-thing-at-point 'sexp)))))
   (define-eval-sexp-fu-flash-command eval-defun
     (eval-sexp-fu-flash (when (ignore-errors (preceding-sexp))
@@ -399,13 +409,11 @@ such that ignores any prefix arguments."
                                     (point))))))))
 (defun esf-initialize-slime ()
   (define-eval-sexp-fu-flash-command slime-eval-last-expression
-    (eval-sexp-fu-flash (save-excursion
-                          (backward-char)
+    (eval-sexp-fu-flash (with-esf-end-of-sexp
                           (when (slime-sexp-at-point)
                             (bounds-of-thing-at-point 'sexp)))))
   (define-eval-sexp-fu-flash-command slime-pprint-eval-last-expression
-    (eval-sexp-fu-flash (save-excursion
-                          (backward-char)
+    (eval-sexp-fu-flash (with-esf-end-of-sexp
                           (when (slime-sexp-at-point)
                             (bounds-of-thing-at-point 'sexp)))))
   (define-eval-sexp-fu-flash-command slime-eval-defun
