@@ -422,7 +422,9 @@ such that ignores any prefix arguments."
   (define-eval-sexp-fu-flash-command eval-last-sexp
     (eval-sexp-fu-flash (when (ignore-errors (elisp--preceding-sexp))
                           (with-esf-end-of-sexp
-                            (bounds-of-thing-at-point 'sexp)))))
+                            (save-excursion
+                              (backward-sexp)
+                              (bounds-of-thing-at-point 'sexp))))))
   (define-eval-sexp-fu-flash-command eval-defun
     (eval-sexp-fu-flash (when (ignore-errors (elisp--preceding-sexp))
                           (save-excursion
@@ -439,12 +441,16 @@ such that ignores any prefix arguments."
 (defun esf-initialize-slime ()
   (define-eval-sexp-fu-flash-command slime-eval-last-expression
     (eval-sexp-fu-flash (with-esf-end-of-sexp
-                          (when (slime-sexp-at-point)
-                            (bounds-of-thing-at-point 'sexp)))))
+                          (save-excursion
+                            (when (slime-sexp-at-point)
+                              (backward-sexp)
+                              (bounds-of-thing-at-point 'sexp))))))
   (define-eval-sexp-fu-flash-command slime-pprint-eval-last-expression
     (eval-sexp-fu-flash (with-esf-end-of-sexp
-                          (when (slime-sexp-at-point)
-                            (bounds-of-thing-at-point 'sexp)))))
+                          (save-excursion
+                            (when (slime-sexp-at-point)
+                              (backward-sexp)
+                              (bounds-of-thing-at-point 'sexp))))))
   (define-eval-sexp-fu-flash-command slime-eval-defun
     (eval-sexp-fu-flash (save-excursion
                           (slime-end-of-defun)
