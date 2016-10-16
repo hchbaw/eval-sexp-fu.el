@@ -94,6 +94,11 @@
 
 ;;; Code:
 
+;; TL;DR: Emacs 25 renamed 'preceding-sexp' to 'elisp--preceding-sexp'
+;; alias here
+(unless (fboundp 'elisp--preceding-sexp)
+  (defalias 'elisp--preceding-sexp 'preceding-sexp))
+
 (eval-when-compile (require 'cl))
 (require 'highlight)
 
@@ -140,7 +145,7 @@
 (defmacro esf-konstantly (v)
   `(lambda (&rest _it) ,v))
 (defun esf-every0 (pred xs)
-  (labels ((rec (pred xs acc)
+  (cl-labels ((rec (pred xs acc)
              (if (null xs)
                  acc
                (let ((it (funcall pred (car xs))))
@@ -173,7 +178,7 @@
 (defun* eval-sexp-fu-flash (bounds &optional (face eval-sexp-fu-flash-face) (eface eval-sexp-fu-flash-error-face))
   "BOUNS is either the cell or the function returns, such that (BEGIN . END).
 Reurn the 4 values; bounds, highlighting, un-highlighting and error flashing procedure. This function is convenient to use with `define-eval-sexp-fu-flash-command'."
-  (flet ((bounds () (if (functionp bounds) (funcall bounds) bounds)))
+  (cl-flet ((bounds () (if (functionp bounds) (funcall bounds) bounds)))
     (let ((b (bounds)))
       (when b
         (funcall eval-sexp-fu-flash-function b face eface (current-buffer))))))
@@ -296,7 +301,7 @@ See also `eval-sexp-fu-flash'."
 
 (require 'rx)
 (defun esf-forward-inner-sexp0 ()
-  (flet ((poss ()
+  (cl-flet ((poss ()
            (let
                ((prev (save-excursion (backward-sexp) (forward-sexp) (point)))
                 (next (save-excursion (forward-sexp) (backward-sexp) (point))))
