@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2009-2013 Takeshi Banse <takebi@laafc.net>
 ;; Author: Takeshi Banse <takebi@laafc.net>
-;; Version: 0.4.0
+;; Version: 0.4.1
 ;; Keywords: lisp, highlight, convenience
 ;; Package-Requires: ((highlight "0"))
 
@@ -79,6 +79,9 @@
 ;; and the pprint variants respectively.
 
 ;;; History:
+
+;; v0.4.1
+;; replacing preceding-sexp with elisp--preceding-sexp to avoid obsolete warning in Emacs 25.1
 
 ;; v0.4.0
 ;; Workaround bug#13952 fix about `end-of-sexp'.
@@ -396,11 +399,11 @@ such that ignores any prefix arguments."
 ;;; initialize.
 (defun esf-initialize ()
   (define-eval-sexp-fu-flash-command eval-last-sexp
-    (eval-sexp-fu-flash (when (ignore-errors (preceding-sexp))
+    (eval-sexp-fu-flash (when (ignore-errors (elisp--preceding-sexp))
                           (with-esf-end-of-sexp
                             (bounds-of-thing-at-point 'sexp)))))
   (define-eval-sexp-fu-flash-command eval-defun
-    (eval-sexp-fu-flash (when (ignore-errors (preceding-sexp))
+    (eval-sexp-fu-flash (when (ignore-errors (elisp--preceding-sexp))
                           (save-excursion
                             (end-of-defun)
                             (beginning-of-defun)
