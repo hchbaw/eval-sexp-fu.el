@@ -279,7 +279,7 @@ See also `eval-sexp-fu-flash'."
   (declare (indent 1))
   `(defadvice ,command (around eval-sexp-fu-flash-region activate)
      (if eval-sexp-fu-flash-mode
-         (multiple-value-bind (bounds hi unhi eflash) ,form
+         (cl-multiple-value-bind (bounds hi unhi eflash) ,form
            (if bounds
                (esf-flash-doit (esf-konstantly ad-do-it) hi unhi eflash)
              ad-do-it))
