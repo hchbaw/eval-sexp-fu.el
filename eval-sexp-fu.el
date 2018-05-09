@@ -83,6 +83,7 @@
 ;; v0.4.1
 ;; replacing preceding-sexp with elisp--preceding-sexp to avoid obsolete warning in Emacs 25.1
 ;; Remove `labels' and `flet' (obsolete as of 24.3).
+;; Thank you very much, Daniel Schranz and Robby O'Connor.
 
 ;; v0.4.0
 ;; Workaround bug#13952 fix about `end-of-sexp'.
