@@ -447,7 +447,7 @@ such that ignores any prefix arguments."
   (eval-after-load 'slime
     '(esf-initialize-slime)))
 
-(dont-compile
+(eval-when nil
   (when (fboundp 'expectations)
     (expectations
       (desc "esf-every-pred")
