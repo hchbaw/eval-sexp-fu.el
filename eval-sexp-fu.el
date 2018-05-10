@@ -4,7 +4,7 @@
 ;; Author: Takeshi Banse <takebi@laafc.net>
 ;; Version: 0.4.1
 ;; Keywords: lisp, highlight, convenience
-;; Package-Requires: ((highlight "0"))
+;; Package-Requires: ((cl-lib "0") (highlight "0"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -105,6 +105,7 @@
   (defalias 'elisp--preceding-sexp 'preceding-sexp))
 
 (eval-when-compile (require 'cl))
+(require 'cl-lib)
 (require 'highlight)
 
 (defgroup eval-sexp-fu nil
