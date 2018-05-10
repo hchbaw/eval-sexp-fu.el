@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2009-2013 Takeshi Banse <takebi@laafc.net>
 ;; Author: Takeshi Banse <takebi@laafc.net>
-;; Version: 0.4.1
+;; Version: 0.4.2
 ;; Keywords: lisp, highlight, convenience
 ;; Package-Requires: ((cl-lib "0") (highlight "0"))
 
@@ -79,6 +79,10 @@
 ;; and the pprint variants respectively.
 
 ;;; History:
+
+;; v0.4.2
+;; rename missing multiple-value-bind to cl-multiple-value-bind
+;; Thank you very much, Hlöðver Sigurðsson
 
 ;; v0.4.1
 ;; replacing preceding-sexp with elisp--preceding-sexp to avoid obsolete warning in Emacs 25.1
