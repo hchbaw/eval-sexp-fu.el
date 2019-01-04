@@ -4,7 +4,7 @@
 ;; Author: Takeshi Banse <takebi@laafc.net>
 ;; Version: 0.4.2
 ;; Keywords: lisp, highlight, convenience
-;; Package-Requires: ((cl-lib "0") (highlight "0"))
+;; Package-Requires: ((cl-lib "0"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -30,8 +30,7 @@
 
 ;;; Installation:
 ;;
-;; Put the highlight.el to your load-path.
-;; Then require this package.
+;; Require this package using (require 'eval-sexp-fu)
 
 ;;; Commands:
 ;;
@@ -110,7 +109,6 @@
 
 (eval-when-compile (require 'cl))
 (require 'cl-lib)
-(require 'highlight)
 
 (defgroup eval-sexp-fu nil
   "Tiny functionality enhancements for evaluating sexps."
@@ -150,6 +148,9 @@
   :type '(choice (function-item eval-sexp-fu-flash-default)
                  (function-item eval-sexp-fu-flash-paren-only))
   :group 'eval-sexp-fu)
+(defcustom eval-sexp-fu-overlay-priority 0
+  "Priority of the overlays created by esf-hl-highlight-bounds."
+  :type 'integer :group 'eval-sexp-fu)
 
 ;;; Tools
 (defmacro esf-konstantly (v)
@@ -166,10 +167,15 @@
 
 (defun esf-hl-highlight-bounds (bounds face buf)
   (with-current-buffer buf
-    (hlt-highlight-region (car bounds) (cdr bounds) face)))
+    (let ((ov (make-overlay (car bounds) (cdr bounds))))
+      (overlay-put ov 'face face)
+      (overlay-put ov 'esf-highlight t)
+      (overlay-put ov 'priority eval-sexp-fu-overlay-priority))))
 (defun esf-hl-unhighlight-bounds (bounds buf)
   (with-current-buffer buf
-    (hlt-unhighlight-region (car bounds) (cdr bounds))))
+    (dolist (ov (overlays-in (car bounds) (cdr bounds)))
+      (when (overlay-get ov 'esf-highlight)
+        (delete-overlay ov)))))
 (defun esf-flash-error-bounds (bounds buf face)
   (when face
     (let ((flash-error
