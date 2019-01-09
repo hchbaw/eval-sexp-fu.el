@@ -64,6 +64,9 @@
 ;;  `eval-sexp-fu-flash-function'
 ;;    *Function to be used to create all of the actual flashing implementations.
 ;;    default = (quote eval-sexp-fu-flash-default)
+;;  `eval-sexp-fu-overlay-priority'
+;;    Priority of the overlays created by esf-hl-highlight-bounds.
+;;    default = 0
 ;;  `eval-sexp-fu-flash-doit-function'
 ;;    *Function to use for flashing the sexps.
 ;;    default = (quote eval-sexp-fu-flash-doit-simple)
