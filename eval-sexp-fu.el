@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2009-2013 Takeshi Banse <takebi@laafc.net>
 ;; Author: Takeshi Banse <takebi@laafc.net>
-;; Version: 0.4.2
+;; Version: 0.5.0
 ;; Keywords: lisp, highlight, convenience
 ;; Package-Requires: ((cl-lib "0"))
 
@@ -81,6 +81,10 @@
 ;; and the pprint variants respectively.
 
 ;;; History:
+
+;; v0.5.0
+;; Remove dependency on highlight.el
+;; Thank you very much, yuhan0.
 
 ;; v0.4.2
 ;; rename missing multiple-value-bind to cl-multiple-value-bind
