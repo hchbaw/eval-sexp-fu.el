@@ -124,7 +124,7 @@
 
 ;;; Flashing the sexps during the evaluation for just an eye candy.
 (defface eval-sexp-fu-flash
-  '((((class color)) (:background "blue" :foreground "white" :bold t))
+  '((((class color)) (:background "slate blue"))
     (t (:inverse-video t)))
   "Face for highlighting sexps during evaluation."
   :group 'eval-sexp-fu)
