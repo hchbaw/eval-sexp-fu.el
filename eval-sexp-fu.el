@@ -497,12 +497,46 @@ such that ignores any prefix arguments."
     (define-eval-sexp-fu-eval-sexp eval-sexp-fu-sly-pprint-eval-expression
         sly-pprint-eval-last-expression)))
 
+;;; Geiser Scheme Mode
+(defun geiser-bounds-of-define ()
+  (cons (save-excursion
+          (beginning-of-defun)
+          (point))
+	(save-excursion
+          (end-of-defun)
+          (point))))
+
+(defun geiser-bounds-of-last-sexp ()
+  (cons (save-excursion
+          (backward-sexp)
+          (point))
+        (point)))
+
+(defun esf-initialize-geiser ()
+  ;; last sexp
+  (define-eval-sexp-fu-flash-command geiser-eval-last-sexp
+    (eval-sexp-fu-flash (geiser-bounds-of-last-sexp)))
+  (define-eval-sexp-fu-eval-sexp eval-sexp-fu-geiser-eval-sexp
+    geiser-eval-last-sexp)
+  ;; ;; region
+  ;; (define-eval-sexp-fu-flash-command geiser-eval-region
+  ;;   (eval-sexp-fu-flash (scmesf--bounds-of-region)))
+  ;; (define-eval-sexp-fu-eval-sexp eval-sexp-fu-geiser-eval-region
+  ;;   geiser-eval-region)
+  ;; define
+  (define-eval-sexp-fu-flash-command geiser-eval-definition
+    (eval-sexp-fu-flash (geiser-bounds-of-define)))
+  (define-eval-sexp-fu-eval-sexp eval-sexp-fu-geiser-eval-define
+    geiser-eval-definition))
+
 (eval-when (load eval)
   (esf-initialize)
   (eval-after-load 'slime
     '(esf-initialize-slime))
   (eval-after-load 'sly
-    '(esf-initialize-sly)))
+    '(esf-initialize-sly))
+  (eval-after-load 'geiser
+    '(esf-initialize-geiser)))
 
 (eval-when nil
   (when (fboundp 'expectations)
