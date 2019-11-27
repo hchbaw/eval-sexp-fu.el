@@ -467,10 +467,42 @@ such that ignores any prefix arguments."
     (define-eval-sexp-fu-eval-sexp eval-sexp-fu-slime-pprint-eval-expression
         slime-pprint-eval-last-expression)))
 
+;;; ateym added support for the Sly mode
+(defun esf-initialize-sly ()
+  "Enriching Sly."
+  ;; Same Slime functions for Sly
+  (define-eval-sexp-fu-flash-command sly-eval-last-expression
+    (eval-sexp-fu-flash (with-esf-end-of-sexp
+                          (when (sly-sexp-at-point)
+                            (bounds-of-thing-at-point 'sexp)))))
+  (define-eval-sexp-fu-flash-command sly-pprint-eval-last-expression
+    (eval-sexp-fu-flash (with-esf-end-of-sexp
+                          (when (sly-sexp-at-point)
+                            (bounds-of-thing-at-point 'sexp)))))
+  (define-eval-sexp-fu-flash-command sly-eval-defun
+    (eval-sexp-fu-flash (save-excursion
+                          (end-of-defun)
+                          (beginning-of-defun)
+                          (when (sly-sexp-at-point)
+                            (bounds-of-thing-at-point 'sexp)))))
+  (progn
+    ;; Defines:
+    ;; `eval-sexp-fu-sly-eval-expression-inner-list',
+    ;; `eval-sexp-fu-sly-eval-expression-inner-sexp'
+    ;; and the pprint variants respectively.
+    (define-eval-sexp-fu-eval-sexp eval-sexp-fu-sly-eval-defun
+        sly-eval-defun)
+    (define-eval-sexp-fu-eval-sexp eval-sexp-fu-sly-eval-expression
+        sly-eval-last-expression)
+    (define-eval-sexp-fu-eval-sexp eval-sexp-fu-sly-pprint-eval-expression
+        sly-pprint-eval-last-expression)))
+
 (eval-when (load eval)
   (esf-initialize)
   (eval-after-load 'slime
-    '(esf-initialize-slime)))
+    '(esf-initialize-slime))
+  (eval-after-load 'sly
+    '(esf-initialize-sly)))
 
 (eval-when nil
   (when (fboundp 'expectations)
