@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2009-2013 Takeshi Banse <takebi@laafc.net>
 ;; Author: Takeshi Banse <takebi@laafc.net>
-;; Version: 0.5.0
+;; Version: 0.6.0
 ;; Keywords: lisp, highlight, convenience
 ;; Package-Requires: ((cl-lib "0"))
 
@@ -81,6 +81,10 @@
 ;; and the pprint variants respectively.
 
 ;;; History:
+
+;; v0.6.0
+;; Fix (bounds-of-thing-at-point 'sexp) usage.
+;; Nicer face, Sly and Geiser modes support, thank you very much, teymuri.
 
 ;; v0.5.0
 ;; Remove dependency on highlight.el
