@@ -1,4 +1,4 @@
-;;; eval-sexp-fu.el --- Tiny functionality enhancements for evaluating sexps.
+;;; eval-sexp-fu.el --- Tiny functionality enhancements for evaluating sexps. -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2009-2013 Takeshi Banse <takebi@laafc.net>
 ;; Author: Takeshi Banse <takebi@laafc.net>
@@ -118,7 +118,7 @@
 (unless (fboundp 'elisp--preceding-sexp)
   (defalias 'elisp--preceding-sexp 'preceding-sexp))
 
-(eval-when-compile (require 'cl))
+(eval-when-compile (require 'rx))
 (require 'cl-lib)
 
 (defgroup eval-sexp-fu nil
@@ -167,14 +167,14 @@
 (defmacro esf-konstantly (v)
   `(lambda (&rest _it) ,v))
 (defun esf-every-pred (&rest preds)
-  (lexical-let ((preds preds))
+  (let ((pds preds))
     (lambda (x)
-      (loop with ret = nil
-            for p in preds
-            do (setq ret (funcall p x))
-            unless ret
-            return nil
-            finally return ret))))
+      (cl-loop with ret = nil
+               for p in pds
+               do (setq ret (funcall p x))
+               unless ret
+               return nil
+               finally return ret))))
 
 (defun esf-hl-highlight-bounds (bounds face buf)
   (with-current-buffer buf
@@ -199,7 +199,7 @@
                                 eval-sexp-fu-flash-duration)
                            nil flash-error
                            bounds buf face))))
-(defun* eval-sexp-fu-flash (bounds &optional (face eval-sexp-fu-flash-face) (eface eval-sexp-fu-flash-error-face))
+(cl-defun eval-sexp-fu-flash (bounds &optional (face eval-sexp-fu-flash-face) (eface eval-sexp-fu-flash-error-face))
   "BOUNS is either the cell or the function returns, such that (BEGIN . END).
 Reurn the 4 values; bounds, highlighting, un-highlighting and error flashing procedure. This function is convenient to use with `define-eval-sexp-fu-flash-command'."
   (let ((b (if (functionp bounds) (funcall bounds) bounds)))
@@ -207,10 +207,10 @@ Reurn the 4 values; bounds, highlighting, un-highlighting and error flashing pro
       (funcall eval-sexp-fu-flash-function b face eface (current-buffer)))))
 (defun eval-sexp-fu-flash-default (bounds face eface buf)
   "Create all of the actual flashing implementations. See also `eval-sexp-fu-flash'."
-  (values bounds
-          (apply-partially 'esf-hl-highlight-bounds bounds face buf)
-          (apply-partially 'esf-hl-unhighlight-bounds bounds buf)
-          (apply-partially 'esf-flash-error-bounds bounds buf eface)))
+  (cl-values bounds
+             (apply-partially 'esf-hl-highlight-bounds bounds face buf)
+             (apply-partially 'esf-hl-unhighlight-bounds bounds buf)
+             (apply-partially 'esf-flash-error-bounds bounds buf eface)))
 
 (defun eval-sexp-fu-flash-paren-only (bounds face eface buf)
   (esf-flash-paren-only-if (esf-every-pred
@@ -238,11 +238,11 @@ Reurn the 4 values; bounds, highlighting, un-highlighting and error flashing pro
                                      (goto-char (car bounds))
                                      (down-list)
                                      (point)))))
-    (values bounds
-            (apply-partially hi lparen rparen face buf)
-            (apply-partially uh lparen rparen buf)
-            (apply-partially ef lparen rparen eface buf))))
-(defun* esf-flash-paren-surrounded-p ((bounds . buf))
+    (cl-values bounds
+               (apply-partially hi lparen rparen face buf)
+               (apply-partially uh lparen rparen buf)
+               (apply-partially ef lparen rparen eface buf))))
+(cl-defun esf-flash-paren-surrounded-p ((bounds . buf))
   (with-current-buffer buf
     (and (save-excursion
            (goto-char (1- (cdr bounds)))
@@ -251,7 +251,7 @@ Reurn the 4 values; bounds, highlighting, un-highlighting and error flashing pro
            (goto-char (car bounds))
            (looking-at (rx (or (syntax expression-prefix)
                                (syntax open-parenthesis))))))))
-(defun* esf-flash-paren-visible-p ((bounds . _buf))
+(cl-defun esf-flash-paren-visible-p ((bounds . _buf))
   (and (pos-visible-in-window-p (cdr bounds))
        (pos-visible-in-window-p (car bounds))))
 
@@ -333,7 +333,7 @@ See also `eval-sexp-fu-flash'."
   (cond ((looking-at (rx (or (syntax symbol) (syntax word)
                              (syntax open-parenthesis))))
          (forward-sexp))
-        (t (destructuring-bind (pp pl np nl cp cl)
+        (t (cl-destructuring-bind (pp pl np nl cp cl)
                (esf-forward-inner-sexp0-positions)
              (cond ((and (<=  pp cp) (<= cp np))
                     (cond ((= pl cl) (backward-sexp))
@@ -349,7 +349,7 @@ See also `eval-sexp-fu-flash'."
     (scan-error nil)))
 (defun esf-backward-up-inner-list0 (steps)
   (unless steps (setq steps 1))
-  (when (looking-at (rx (syntax open-parenthesis))) (decf steps))
+  (when (looking-at (rx (syntax open-parenthesis))) (cl-decf steps))
   (dotimes (_ steps) (backward-up-list)))
 (defun esf-backward-up-inner-list (steps)
   (condition-case nil
@@ -533,7 +533,7 @@ such that ignores any prefix arguments."
   (define-eval-sexp-fu-eval-sexp eval-sexp-fu-geiser-eval-define
     geiser-eval-definition))
 
-(eval-when (load eval)
+(cl-eval-when (load eval)
   (esf-initialize)
   (eval-after-load 'slime
     '(esf-initialize-slime))
@@ -542,7 +542,7 @@ such that ignores any prefix arguments."
   (eval-after-load 'geiser
     '(esf-initialize-geiser)))
 
-(eval-when nil
+(cl-eval-when nil
   (when (fboundp 'expectations)
     (expectations
       (desc "esf-every-pred")
